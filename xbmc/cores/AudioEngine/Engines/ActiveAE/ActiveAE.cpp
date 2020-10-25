@@ -1649,7 +1649,7 @@ void CActiveAE::ApplySettingsToFormat(AEAudioFormat &format, AudioSettings &sett
     *mode = MODE_PCM;
 
   // Best match setting for PCM and sink supports the source format.
-  if ((settings.config == AE_CONFIG_MATCH) && (*mode == MODE_PCM) && m_sink.SupportsFormat(m_settings.device, format))
+  if ((settings.config == AE_CONFIG_MATCH) && mode && (*mode == MODE_PCM) && m_sink.SupportsFormat(m_settings.device, format))
   {
     // Use the source format
   }
