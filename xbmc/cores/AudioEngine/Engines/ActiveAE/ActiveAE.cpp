@@ -1161,16 +1161,16 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
   AEAudioFormat oldSinkRequestFormat = m_sinkRequestFormat;
 
   inputFormat = GetInputFormat(desiredFmt);
-  CLog::Log(LOGINFO, "ActiveAE::Configure - Input format %d, sample rate %d", inputFormat.m_dataFormat, inputFormat.m_sampleRate);
-  CLog::Log(LOGINFO, "ActiveAE::Configure - Mode %d", m_mode);
-  CLog::Log(LOGINFO, "ActiveAE::Configure - Settings config %d", m_settings.config);
+  CLog::Log(LOGDEBUG, "ActiveAE::Configure - Input format %d, sample rate %d", inputFormat.m_dataFormat, inputFormat.m_sampleRate);
+  CLog::Log(LOGDEBUG, "ActiveAE::Configure - Mode %d", m_mode);
+  CLog::Log(LOGDEBUG, "ActiveAE::Configure - Settings config %d", m_settings.config);
 
   m_sinkRequestFormat = inputFormat;
-  CLog::Log(LOGINFO, "ActiveAE::Configure - Initial sink request format %d, sample rate %d", m_sinkRequestFormat.m_dataFormat, m_sinkRequestFormat.m_sampleRate);
+  CLog::Log(LOGDEBUG, "ActiveAE::Configure - Initial sink request format %d, sample rate %d", m_sinkRequestFormat.m_dataFormat, m_sinkRequestFormat.m_sampleRate);
   ApplySettingsToFormat(m_sinkRequestFormat, m_settings, (int*)&m_mode);
   m_extKeepConfig = 0;
-  CLog::Log(LOGINFO, "ActiveAE::Configure - Sink request format %d, sample rate %d", m_sinkRequestFormat.m_dataFormat, m_sinkRequestFormat.m_sampleRate);
-  CLog::Log(LOGINFO, "ActiveAE::Configure - Mode %d", m_mode);
+  CLog::Log(LOGDEBUG, "ActiveAE::Configure - Sink request format %d, sample rate %d", m_sinkRequestFormat.m_dataFormat, m_sinkRequestFormat.m_sampleRate);
+  CLog::Log(LOGDEBUG, "ActiveAE::Configure - Mode %d", m_mode);
 
   std::string device = (m_sinkRequestFormat.m_dataFormat == AE_FMT_RAW) ? m_settings.passthroughdevice : m_settings.device;
   std::string driver;
@@ -1648,10 +1648,13 @@ void CActiveAE::ApplySettingsToFormat(AEAudioFormat &format, AudioSettings &sett
   if (mode)
     *mode = MODE_PCM;
 
-  // Best match setting for PCM and sink supports the source format.
-  if ((settings.config == AE_CONFIG_MATCH) && mode && (*mode == MODE_PCM) && m_sink.SupportsFormat(m_settings.device, format))
+  if ((settings.config == AE_CONFIG_MATCH) && 
+      (mode != nullptr) && 
+      (*mode == MODE_PCM) && 
+      m_sink.SupportsFormat(m_settings.device, format))
   {
-    // Use the source format
+    // Best match setting with PCM and a sink that supports the source format.
+    // Use the source format without any changes
   }
   // raw pass through
   else if (format.m_dataFormat == AE_FMT_RAW)
@@ -1790,7 +1793,7 @@ bool CActiveAE::InitSink()
   // send message to sink
   m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::SETNOISETYPE, &m_settings.streamNoise, sizeof(bool));
   m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::SETSILENCETIMEOUT, &m_settings.silenceTimeout, sizeof(int));
-  CLog::Log(LOGINFO, "ActiveAE::InitSink - Sink config format %d and sample rate %d", m_sinkRequestFormat.m_dataFormat, m_sinkRequestFormat.m_sampleRate);
+  CLog::Log(LOGDEBUG, "ActiveAE::InitSink - Sink config format %d and sample rate %d", m_sinkRequestFormat.m_dataFormat, m_sinkRequestFormat.m_sampleRate);
 
   Message *reply;
   if (m_sink.m_controlPort.SendOutMessageSync(CSinkControlProtocol::CONFIGURE,
@@ -1815,7 +1818,7 @@ bool CActiveAE::InitSink()
       m_stats.SetSinkCacheTotal(data->cacheTotal);
       m_stats.SetSinkLatency(data->latency);
       m_stats.SetCurrentSinkFormat(m_sinkFormat);
-      CLog::Log(LOGINFO, "ActiveAE::InitSink - Sink reply format %d and sample rate %d", m_sinkFormat.m_dataFormat, m_sinkFormat.m_sampleRate);
+      CLog::Log(LOGDEBUG, "ActiveAE::InitSink - Sink reply format %d and sample rate %d", m_sinkFormat.m_dataFormat, m_sinkFormat.m_sampleRate);
     }
     reply->Release();
   }
@@ -1942,7 +1945,7 @@ bool CActiveAE::RunStages()
         {
           CActiveAEStream *slave = (CActiveAEStream*)((*it)->m_streamSlave);
           slave->m_paused = false;
-          CLog::Log(LOGINFO, "ActiveAE::RunStages - Active stream format %d and sample rate %d", slave->GetDataFormat(), slave->GetSampleRate());
+          CLog::Log(LOGDEBUG, "ActiveAE::RunStages - Active stream format %d and sample rate %d", slave->GetDataFormat(), slave->GetSampleRate());
 
           //! @todo find better solution for this gapless bites audiophile
           if (m_settings.config == AE_CONFIG_MATCH)
