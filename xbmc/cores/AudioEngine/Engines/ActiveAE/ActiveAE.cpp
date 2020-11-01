@@ -1645,19 +1645,11 @@ void CActiveAE::ChangeResamplers()
 void CActiveAE::ApplySettingsToFormat(AEAudioFormat &format, AudioSettings &settings, int *mode)
 {
   int oldMode = m_mode;
-  if (mode)
+  if (mode != nullptr)
     *mode = MODE_PCM;
 
-  if ((settings.config == AE_CONFIG_MATCH) && 
-      (mode != nullptr) && 
-      (*mode == MODE_PCM) && 
-      m_sink.SupportsFormat(m_settings.device, format))
-  {
-    // Best match setting with PCM and a sink that supports the source format.
-    // Use the source format without any changes
-  }
   // raw pass through
-  else if (format.m_dataFormat == AE_FMT_RAW)
+  if (format.m_dataFormat == AE_FMT_RAW)
   {
     if (mode)
       *mode = MODE_RAW;
@@ -1678,6 +1670,17 @@ void CActiveAE::ApplySettingsToFormat(AEAudioFormat &format, AudioSettings &sett
     format.m_streamInfo.m_sampleRate = 48000;
     if (mode)
       *mode = MODE_TRANSCODE;
+  }
+  // use source format unchanged
+  else if ((settings.config == AE_CONFIG_MATCH) && 
+             (mode != nullptr) && 
+             (*mode == MODE_PCM) && 
+             m_sink.SupportsFormat(m_settings.device, format))
+  {
+    // If the user selected the best match setting, the mode is PCM and the sink supports
+    // the source format, use the source format without any changes.
+    // This preserves e.g. the channel layout, the sample rate and even the bit width 
+    // and lets DACs recognize the stream as bit perfect.
   }
   else
   {
